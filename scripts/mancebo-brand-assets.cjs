@@ -5,6 +5,11 @@ const sharp = require("sharp");
 const process = require("node:process");
 const root = path.resolve(__dirname, "../apps/web/public");
 const check = process.argv.includes("--check");
+const assetHash = (name, bytes) =>
+  crypto
+    .createHash("sha256")
+    .update(name.endsWith(".svg") ? bytes.toString("utf8").replaceAll("\r\n", "\n") : bytes)
+    .digest("hex");
 const wordmark =
   '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="32" viewBox="0 0 180 32"><text x="0" y="26" fill="#111827" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700">Mancebo.ai</text></svg>\n';
 const icon = fs.readFileSync(path.join(root, "mancebo-icon.svg"));
@@ -29,11 +34,10 @@ async function main() {
     if (receipt.brand !== "Mancebo.ai") throw Error("Unexpected brand");
     for (const [name, item] of Object.entries(receipt.assets)) {
       const bytes = fs.readFileSync(path.join(root, name));
-      if (crypto.createHash("sha256").update(bytes).digest("hex") !== item.sha256)
-        throw Error("Brand asset changed: " + name);
+      if (assetHash(name, bytes) !== item.sha256) throw Error("Brand asset changed: " + name);
     }
     for (const name of aliases)
-      if (fs.readFileSync(path.join(root, name), "utf8") !== wordmark)
+      if (fs.readFileSync(path.join(root, name), "utf8").replaceAll("\r\n", "\n") !== wordmark)
         throw Error("Unexpected wordmark: " + name);
     for (const [name, size] of Object.entries(icons)) {
       const meta = await sharp(path.join(root, name)).metadata();
