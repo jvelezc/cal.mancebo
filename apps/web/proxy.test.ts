@@ -6,8 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // We'll test the wrapped proxy as it would be used in production
-import proxy from "./proxy";
-import { config } from "./proxy";
+import proxy, { config } from "./proxy";
 
 // Mock dependencies at module level
 vi.mock("@vercel/edge-config", () => ({
@@ -151,10 +150,38 @@ describe("Middleware Integration Tests", () => {
     vi.clearAllMocks();
     // Set test environment
     vi.stubEnv("NEXT_PUBLIC_WEBAPP_URL", WEBAPP_URL);
+    vi.stubEnv("NEXT_PUBLIC_MANCEBO_AUTH_ENABLED", "false");
+    vi.stubEnv("MANCEBO_AUTH_ENABLED", "false");
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it.each([
+    "/api/auth/signup",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+  ])("refuses native identity mutation in Mancebo mode: %s", async (path) => {
+    vi.stubEnv("NEXT_PUBLIC_MANCEBO_AUTH_ENABLED", "true");
+    const response = await proxy(createTestRequest({ url: `${WEBAPP_URL}${path}` }));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      error: "Manage your sign-in at Mancebo.ai.",
+      code: "MANCEBO_MANAGED_IDENTITY",
+    });
+    expect(edgeConfigGet).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "/booking/public",
+    "/api/auth/callback/mancebo",
+  ])("keeps attendee booking and the Mancebo session exchange open: %s", async (path) => {
+    vi.stubEnv("MANCEBO_AUTH_ENABLED", "true");
+    const response = await proxy(createTestRequest({ url: `${WEBAPP_URL}${path}` }));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
   describe("Static File Handling", () => {
@@ -459,9 +486,9 @@ describe("Middleware Matcher Configuration", () => {
     expect(uniqueEntries.size).toBe(matcher.length);
   });
 
-  it("should not contain any /api/ routes except /api/auth/signup", () => {
-    const apiRoutes = matcher.filter((entry) => entry.startsWith("/api/") && entry !== "/api/auth/signup");
-    expect(apiRoutes).toEqual([]);
+  it("matches only the three managed native identity mutation routes under /api", () => {
+    const apiRoutes = matcher.filter((entry) => entry.startsWith("/api/"));
+    expect(apiRoutes).toEqual(["/api/auth/signup", "/api/auth/forgot-password", "/api/auth/reset-password"]);
   });
 
   it("should only contain the expected reduced route set", () => {
@@ -473,6 +500,8 @@ describe("Middleware Matcher Configuration", () => {
       "/:path*/embed",
       "/availability",
       "/api/auth/signup",
+      "/api/auth/forgot-password",
+      "/api/auth/reset-password",
     ]);
   });
 });

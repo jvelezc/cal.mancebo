@@ -67,6 +67,18 @@ const shouldEnforceCsp = (url: URL) => {
 
 const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const url = req.nextUrl;
+  if (
+    (process.env.MANCEBO_AUTH_ENABLED === "true" ||
+      process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true") &&
+    ["/api/auth/signup", "/api/auth/forgot-password", "/api/auth/reset-password"].includes(
+      url.pathname.replace(/\/$/, "")
+    )
+  ) {
+    return NextResponse.json(
+      { error: "Manage your sign-in at Mancebo.ai.", code: "MANCEBO_MANAGED_IDENTITY" },
+      { status: 403 }
+    );
+  }
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
   const requestHeaders = new Headers(reqWithEnrichedHeaders.headers);
 
@@ -163,7 +175,17 @@ function enrichRequestWithHeaders({ req }: { req: NextRequest }) {
 }
 
 export const config = {
-  matcher: ["/auth/login", "/login", "/apps/installed", "/auth/logout", "/:path*/embed", "/availability", "/api/auth/signup"],
+  matcher: [
+    "/auth/login",
+    "/login",
+    "/apps/installed",
+    "/auth/logout",
+    "/:path*/embed",
+    "/availability",
+    "/api/auth/signup",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+  ],
 };
 
 export default proxy;

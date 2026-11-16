@@ -1,3 +1,12 @@
+# Mancebo.ai appointments
+
+This is Mancebo.ai's owned scheduling fork. Open [Your appointments](https://mancebo.ai/appointments) with your existing Mancebo sign-in; customers do not create another scheduling password or configure federation.
+
+Read [Mancebo deployment and access](MANCEBO-APPOINTMENTS.md) for identity, hosting, operator documentation and release qualification. Upstream code and required licensing remain attributed below.
+
+<details>
+<summary>Upstream development reference</summary>
+
 > [!WARNING]  
 > Use at your own risk. Cal.diy is the open source community edition of Cal.com and it is intended for users who want to self-host their own Cal.diy instance. It is strictly recommended for personal, non-production use. Please review all installation and configuration steps carefully. Self-hosting requires advanced knowledge of server administration, database management, and securing sensitive data. Proceed only if you are comfortable with these responsibilities.
 
@@ -835,3 +844,5 @@ Cal.diy is built on the foundation created by [Cal.com](https://cal.com) and the
 - [Day.js](https://day.js.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Prisma](https://prisma.io/)
+
+</details>
