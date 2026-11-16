@@ -13,6 +13,11 @@ build
 # Git
 .git
 .github
+gha-creds-*.json
+**/.env
+**/.env.local
+**/.env.production
+**/.env.development
 
 # Testing
 coverage
