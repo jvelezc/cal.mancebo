@@ -90,7 +90,7 @@ export const ManceboCredentialsProvider = CredentialsProvider({
   authorize: authorizeMancebo,
 });
 
-export async function manceboSessionToken(token: JWT, user?: User) {
+export async function manceboSessionToken(token: JWT, user?: Pick<User, "manceboAccessToken">) {
   const accessToken = user?.manceboAccessToken ?? token.manceboAccessToken;
   if (typeof accessToken !== "string") throw new Error("MANCEBO_SIGN_IN_REQUIRED");
   const current = await appointmentUser(accessToken, false);
