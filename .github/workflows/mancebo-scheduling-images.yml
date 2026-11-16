@@ -38,7 +38,7 @@ jobs:
       - run: corepack enable
       - run: yarn install --immutable
       - run: node scripts/mancebo-brand-assets.cjs --check
-      - run: TZ=UTC yarn vitest run packages/features/auth/lib/mancebo-principal.test.ts packages/features/auth/lib/mancebo-auth.test.ts apps/web/modules/auth/ManceboSessionBridge.test.tsx
+      - run: TZ=UTC yarn vitest run packages/features/auth/lib/mancebo-principal.test.ts packages/features/auth/lib/mancebo-auth.test.ts apps/web/modules/auth/ManceboSessionBridge.test.tsx packages/i18n/mancebo-brand.test.ts
       - run: yarn type-check:ci --force
 
   build:

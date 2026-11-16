@@ -1,9 +1,10 @@
-import { createInstance } from "i18next";
 import type { i18n as I18nInstance } from "i18next";
+import { createInstance } from "i18next";
+import { brandSchedulingTranslations } from "./mancebo-brand";
 
 const { i18n } = require("@calcom/i18n/next-i18next.config");
 
-const englishTranslations: Record<string, string> = require("@calcom/i18n/locales/en/common.json");
+const englishTranslations = brandSchedulingTranslations(require("@calcom/i18n/locales/en/common.json"));
 
 const translationCache = new Map<string, Record<string, string>>();
 const i18nInstanceCache = new Map<string, I18nInstance>();
@@ -14,7 +15,7 @@ export function mergeWithEnglishFallback(localeTranslations: Record<string, stri
     // IMPORTANT: Spread English translations first to provide fallback for missing keys
     ...englishTranslations,
     // Then spread locale translations to override English when keys exist in both
-    ...localeTranslations,
+    ...brandSchedulingTranslations(localeTranslations),
   };
 }
 

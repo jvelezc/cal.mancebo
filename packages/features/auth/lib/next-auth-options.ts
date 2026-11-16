@@ -290,7 +290,7 @@ export async function authorizeCredentials(
 
 export const CalComCredentialsProvider = CredentialsProvider({
   id: "credentials",
-  name: "Cal.diy",
+  name: "Mancebo.ai",
   type: "credentials",
   credentials: {
     email: { label: "Email Address", type: "email", placeholder: "john.doe@example.com" },
