@@ -38,7 +38,7 @@ jobs:
       - run: corepack enable
       - run: yarn install --immutable
       - run: node scripts/mancebo-brand-assets.cjs --check
-      - run: TZ=UTC yarn vitest run packages/features/auth/lib/mancebo-principal.test.ts packages/features/auth/lib/mancebo-auth.test.ts
+      - run: TZ=UTC yarn vitest run packages/features/auth/lib/mancebo-principal.test.ts packages/features/auth/lib/mancebo-auth.test.ts apps/web/modules/auth/ManceboSessionBridge.test.tsx
       - run: yarn type-check:ci --force
 
   build:
@@ -94,6 +94,7 @@ jobs:
             CALENDSO_ENCRYPTION_KEY=${{ env.CALENDSO_ENCRYPTION_KEY }}
             CALCOM_TELEMETRY_DISABLED=1
             NEXT_PUBLIC_DISABLE_SIGNUP=true
+            NEXT_PUBLIC_MANCEBO_AUTH_ENABLED=true
             NEXT_PUBLIC_WEBAPP_URL=https://appointments.mancebo.ai
             NEXT_PUBLIC_API_V2_URL=https://appointments.mancebo.ai/api/v2
             MANCEBO_BUILD_DATABASE_INITIALIZE=true
@@ -133,6 +134,7 @@ jobs:
             CALENDSO_ENCRYPTION_KEY=${{ env.CALENDSO_ENCRYPTION_KEY }}
             CALCOM_TELEMETRY_DISABLED=1
             NEXT_PUBLIC_DISABLE_SIGNUP=true
+            NEXT_PUBLIC_MANCEBO_AUTH_ENABLED=true
             NEXT_PUBLIC_WEBAPP_URL=https://appointments.mancebo.ai
             NEXT_PUBLIC_API_V2_URL=https://appointments.mancebo.ai/api/v2
             MANCEBO_BUILD_DATABASE_INITIALIZE=true

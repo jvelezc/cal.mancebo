@@ -1,7 +1,8 @@
+import process from "node:process";
+import PageWrapper from "@components/PageWrapperAppDir";
 import { headers } from "next/headers";
 import Script from "next/script";
-
-import PageWrapper from "@components/PageWrapperAppDir";
+import { ManceboSessionBridge } from "../../modules/auth/ManceboSessionBridge";
 
 export default async function PageWrapperLayout({ children }: { children: React.ReactNode }) {
   const h = await headers();
@@ -23,7 +24,11 @@ export default async function PageWrapperLayout({ children }: { children: React.
   return (
     <>
       <PageWrapper requiresLicense={false} nonce={nonce}>
-        {children}
+        {process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true" ? (
+          <ManceboSessionBridge>{children}</ManceboSessionBridge>
+        ) : (
+          children
+        )}
         {scripts.map((script) => (
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Injected scripts from env vars
           <Script
