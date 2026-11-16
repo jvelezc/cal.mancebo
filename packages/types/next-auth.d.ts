@@ -10,6 +10,7 @@ declare module "next-auth" {
    * Returned by `useSession`, `getSession` and received as a prop on the `Provider` React Context
    */
   interface Session {
+    manceboSubject?: string;
     hasValidLicense: boolean;
     profileId?: number | null;
     upId: string;
@@ -17,6 +18,9 @@ declare module "next-auth" {
   }
 
   interface User extends Omit<DefaultUser, "id"> {
+    manceboAccessToken?: string;
+    manceboSubject?: string;
+    manceboExpiresAt?: number;
     id: PrismaUser["id"];
     uuid?: PrismaUser["uuid"];
     emailVerified?: PrismaUser["emailVerified"];
@@ -51,6 +55,9 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    manceboAccessToken?: string;
+    manceboSubject?: string;
+    manceboExpiresAt?: number;
     id?: string | number;
     name?: string | null;
     username?: string | null;
