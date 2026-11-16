@@ -29,9 +29,7 @@ async function main() {
     if (receipt.brand !== "Mancebo.ai") throw Error("Unexpected brand");
     for (const [name, item] of Object.entries(receipt.assets)) {
       const bytes = fs.readFileSync(path.join(root, name));
-      if (
-        crypto.createHash("sha256").update(bytes).digest("hex") !== item.sha256
-      )
+      if (crypto.createHash("sha256").update(bytes).digest("hex") !== item.sha256)
         throw Error("Brand asset changed: " + name);
     }
     for (const name of aliases)
@@ -39,12 +37,9 @@ async function main() {
         throw Error("Unexpected wordmark: " + name);
     for (const [name, size] of Object.entries(icons)) {
       const meta = await sharp(path.join(root, name)).metadata();
-      if (meta.width !== size || meta.height !== size)
-        throw Error("Invalid icon dimensions: " + name);
+      if (meta.width !== size || meta.height !== size) throw Error("Invalid icon dimensions: " + name);
     }
-    console.log(
-      "PASS ManceboBrandAssetIntegrity; ManceboWordmarks; AllApplicationIconSizes",
-    );
+    console.log("PASS ManceboBrandAssetIntegrity; ManceboWordmarks; AllApplicationIconSizes");
     return;
   }
   const assets = new Set(["mancebo-icon.svg"]);
@@ -54,15 +49,11 @@ async function main() {
     assets.add(name);
   }
   for (const name of aliases) write(name, wordmark);
-  for (const name of ["cal-com-icon.svg", "cal-com-icon-white.svg"])
-    write(name, icon);
+  for (const name of ["cal-com-icon.svg", "cal-com-icon-white.svg"]) write(name, icon);
   for (const [name, size] of Object.entries(icons))
     write(name, await sharp(icon).resize(size, size).png().toBuffer());
   write("emails/logo.png", await sharp(Buffer.from(wordmark)).png().toBuffer());
-  write(
-    "emails/CalLogo@2x.png",
-    await sharp(Buffer.from(wordmark)).resize(360, 64).png().toBuffer(),
-  );
+  write("emails/CalLogo@2x.png", await sharp(Buffer.from(wordmark)).resize(360, 64).png().toBuffer());
   const png = fs.readFileSync(path.join(root, "favicon-32x32.png"));
   const header = Buffer.alloc(22);
   header.writeUInt16LE(1, 2);
@@ -86,9 +77,7 @@ async function main() {
         .digest("hex"),
     };
   fs.writeFileSync(manifestPath, JSON.stringify(receipt, null, 2) + "\n");
-  console.log(
-    "Generated Mancebo.ai wordmarks, application icons and email/social images.",
-  );
+  console.log("Generated Mancebo.ai wordmarks, application icons and email/social images.");
 }
 main().catch((error) => {
   console.error(error.message);
