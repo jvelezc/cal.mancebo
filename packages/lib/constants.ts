@@ -1,4 +1,3 @@
-import process from "node:process";
 
 /**
  * Ensures URL has a protocol prefix. If the URL doesn't start with http:// or https://,
