@@ -75,10 +75,7 @@ async function main() {
   const receipt = { brand: "Mancebo.ai", assets: {} };
   for (const name of [...assets].sort())
     receipt.assets[name] = {
-      sha256: crypto
-        .createHash("sha256")
-        .update(fs.readFileSync(path.join(root, name)))
-        .digest("hex"),
+      sha256: assetHash(name, fs.readFileSync(path.join(root, name))),
     };
   fs.writeFileSync(manifestPath, JSON.stringify(receipt, null, 2) + "\n");
   console.log("Generated Mancebo.ai wordmarks, application icons and email/social images.");
