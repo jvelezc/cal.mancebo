@@ -1,0 +1,56 @@
+{
+  "brand": "Mancebo.ai",
+  "assets": {
+    "android-chrome-192x192.png": {
+      "sha256": "a7a769b6e5619cb89368e3daf8690e045b83145028012e2175532d2efa85ffd6"
+    },
+    "android-chrome-256x256.png": {
+      "sha256": "5628801c48c7216d599923942bfa90d448c5f8046f79d79f1fdecd961dc91ba3"
+    },
+    "apple-touch-icon.png": {
+      "sha256": "e329f911ac65efa170d57f643b1b5f1355fc054b8a454678950c78694ba826de"
+    },
+    "cal-com-icon-white.svg": {
+      "sha256": "3b6e8020437536f4cde3a81964d8e6cce699a308aead2cff26342685c5f0acb3"
+    },
+    "cal-com-icon.svg": {
+      "sha256": "3b6e8020437536f4cde3a81964d8e6cce699a308aead2cff26342685c5f0acb3"
+    },
+    "cal-logo-word-black.svg": {
+      "sha256": "85ef0068760c1a9cf396d6f9caaf6fe3594f2e5fde4302372479aad02d0985a0"
+    },
+    "cal-logo-word-dark.svg": {
+      "sha256": "85ef0068760c1a9cf396d6f9caaf6fe3594f2e5fde4302372479aad02d0985a0"
+    },
+    "cal-logo-word.svg": {
+      "sha256": "85ef0068760c1a9cf396d6f9caaf6fe3594f2e5fde4302372479aad02d0985a0"
+    },
+    "calcom-logo-white-word.svg": {
+      "sha256": "85ef0068760c1a9cf396d6f9caaf6fe3594f2e5fde4302372479aad02d0985a0"
+    },
+    "emails/CalLogo@2x.png": {
+      "sha256": "b5e019eb05d8e9cda7046f9a5317827efdf5d7493f0b82c251551b9354ce0e95"
+    },
+    "emails/logo.png": {
+      "sha256": "20b3f76b8206da5f2ad4daa4fddccddf3590c4d82482b457f6949ecc5ec026e8"
+    },
+    "favicon-16x16.png": {
+      "sha256": "e7f054b9aef02ddb2768ac68943b1bd6450ca231b4f523382b819c72873b49e8"
+    },
+    "favicon-32x32.png": {
+      "sha256": "ce14ef1394d7ab277675ec337d0a63829d8bb283aeab3da73ce88a18a92d97c1"
+    },
+    "favicon.ico": {
+      "sha256": "387eaa453e78fc354edb44e0f1ea1e19ce2037d031582234d211c9f493e340ed"
+    },
+    "mancebo-icon.svg": {
+      "sha256": "3b6e8020437536f4cde3a81964d8e6cce699a308aead2cff26342685c5f0acb3"
+    },
+    "mstile-150x150.png": {
+      "sha256": "33af54b9d15d9c7deebd60ed34b7bb9d450836f535da2d46858fe1f74fa01df8"
+    },
+    "og-image.png": {
+      "sha256": "47fd9463e81b7f4d74939588c55456212cec589487450695d3cc982daa1f6b44"
+    }
+  }
+}

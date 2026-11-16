@@ -37,6 +37,7 @@ jobs:
           node-version: '22'
       - run: corepack enable
       - run: yarn install --immutable
+      - run: node scripts/mancebo-brand-assets.cjs --check
       - run: yarn type-check:ci --force
 
   build:
