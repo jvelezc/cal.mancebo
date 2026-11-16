@@ -4,9 +4,21 @@ on:
     paths:
       - .github/workflows/pr.yml
       - .github/workflows/scheduling-runtime-proof.yml
+      - .github/scripts/required-checks.cjs
+      - .github/scripts/required-checks.test.cjs
 permissions:
   contents: read
 jobs:
+  required-policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test .github/scripts/required-checks.test.cjs
   playwright-runtime:
     runs-on: ubuntu-24.04
     steps:
