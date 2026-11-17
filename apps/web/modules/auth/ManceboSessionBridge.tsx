@@ -8,7 +8,13 @@ import { useEffect, useRef, useState } from "react";
 const manceboOrigin = "https://mancebo.ai";
 
 /** Reuse the first-party Mancebo session; no native password or new identity provider. */
-export function ManceboSessionBridge({ children }: { children: React.ReactNode }) {
+export function ManceboSessionBridge({
+  children,
+  renderedSubject,
+}: {
+  children: React.ReactNode;
+  renderedSubject: string | null;
+}) {
   const { t } = useLocale();
   const pathname = usePathname();
   const currentPath = useRef(pathname);
@@ -24,6 +30,7 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
     let active = true;
     let generation = 0;
     let acceptedToken: string | null = null;
+    let acceptedSubject: string | null = null;
     let signingOut = false;
     let queue = Promise.resolve();
     const send = (type: string, subject?: string) =>
@@ -38,7 +45,7 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
         (typeof accessToken !== "string" || accessToken.length > 16384 || typeof subject !== "string")
       )
         return;
-      if (acceptedToken && accessToken === acceptedToken) {
+      if (acceptedToken && accessToken === acceptedToken && subject === acceptedSubject) {
         send("mancebo:appointments-connected", subject);
         return;
       }
@@ -62,11 +69,17 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
           const session = await getSession();
           if (!active || current !== generation) return;
           if (session?.manceboSubject !== subject) throw new Error("MANCEBO_SIGN_IN_REQUIRED");
-          acceptedToken = accessToken;
           if (currentPath.current?.startsWith("/auth/") || currentPath.current === "/signup") {
             window.location.replace("/event-types");
             return;
           }
+          // A full document refresh discards cached server pages for another identity.
+          if (renderedSubject !== subject) {
+            window.location.replace("/event-types");
+            return;
+          }
+          acceptedToken = accessToken;
+          acceptedSubject = subject;
           setConnected(true);
           send("mancebo:appointments-connected", subject);
         } catch {
@@ -106,7 +119,7 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
       window.removeEventListener("message", receive);
       window.removeEventListener("mancebo:appointments-sign-out", requestSignOut);
     };
-  }, []);
+  }, [renderedSubject]);
 
   useEffect(() => {
     if (pathname === "/auth/logout") window.dispatchEvent(new Event("mancebo:appointments-sign-out"));
