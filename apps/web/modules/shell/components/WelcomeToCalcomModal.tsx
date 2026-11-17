@@ -6,7 +6,6 @@ import { Button } from "@calcom/ui/components/button";
 import { Dialog, DialogContent } from "@calcom/ui/components/dialog";
 import { Logo } from "@calcom/ui/components/logo";
 import { CheckIcon, UserIcon } from "@coss/ui/icons";
-
 import { useWelcomeToCalcomModal } from "../hooks/useWelcomeToCalcomModal";
 
 const features = [
@@ -22,6 +21,10 @@ const features = [
 export function WelcomeToCalcomModal() {
   const { t } = useLocale();
   const { isOpen, closeModal } = useWelcomeToCalcomModal();
+  const isMancebo = process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true";
+  const availableFeatures = isMancebo
+    ? ["mancebo_appointments_hours", "mancebo_appointments_links", "mancebo_appointments_review"]
+    : features;
 
   const LARGE = { outer: 48, icon: 24 };
   const RINGS = [60, 95, 130]; // Ring radii in px
@@ -81,11 +84,13 @@ export function WelcomeToCalcomModal() {
             <h2 className="font-cal text-emphasis text-2xl leading-none">
               {t("welcome_to_calcom", { appName: APP_NAME })}
             </h2>
-            <p className="text-default text-sm leading-normal">{t("personal_welcome_description")}</p>
+            <p className="text-default text-sm leading-normal">
+              {t(isMancebo ? "mancebo_appointments_welcome" : "personal_welcome_description")}
+            </p>
           </div>
 
           <div className="mb-2 flex flex-col gap-3">
-            {features.map((feature) => (
+            {availableFeatures.map((feature) => (
               <div key={feature} className="flex items-start gap-2">
                 <CheckIcon className="text-muted mt-0.5 h-4 w-4 shrink-0" />
                 <span className="text-default text-sm font-medium leading-tight">{t(feature)}</span>
@@ -97,10 +102,10 @@ export function WelcomeToCalcomModal() {
         <div className="bg-muted border-subtle flex shrink-0 items-center justify-between rounded-b-2xl border-t px-8 py-6">
           <Button
             color="minimal"
-            href="https://cal.diy"
-            target="_blank"
+            href={isMancebo ? "https://mancebo.ai/docs?topic=appointments" : "https://cal.diy"}
+            target={isMancebo ? "_top" : "_blank"}
             EndIcon="external-link"
-            className="pointer-events-none opacity-0">
+            className={isMancebo ? undefined : "pointer-events-none opacity-0"}>
             {t("learn_more")}
           </Button>
           <Button color="primary" onClick={closeModal}>

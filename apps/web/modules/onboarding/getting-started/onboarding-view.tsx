@@ -28,6 +28,7 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
   const [isPending, startTransition] = useTransition();
   const hasTeamMembership = false;
   const isPendingMembership = false;
+  const isMancebo = process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true";
 
   // Reset onboarding data when visiting this page, but preserve the selected plan
   useEffect(() => {
@@ -35,16 +36,15 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetOnboardingPreservingPlan]);
 
-  // If user has any team membership (pending or accepted), redirect them directly to personal onboarding
-  // This handles the case where users sign up with an invite token (membership is auto-accepted)
+  // Mancebo manages access centrally; upstream paid-plan selection must not change that access.
   useEffect(() => {
-    if (!isPendingMembership && hasTeamMembership) {
+    if (!isPendingMembership && (hasTeamMembership || isMancebo)) {
       setSelectedPlan("personal");
       startTransition(() => {
         router.push("/onboarding/personal/settings");
       });
     }
-  }, [isPendingMembership, hasTeamMembership, router, setSelectedPlan]);
+  }, [isPendingMembership, hasTeamMembership, isMancebo, router, setSelectedPlan]);
 
   // Plan order mapping for determining direction
   const planOrder: Record<PlanType, number> = {
@@ -129,7 +129,7 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
   const selectedPlanData = plans.find((plan) => plan.id === selectedPlan);
 
   // Show loading state while checking for team membership or if redirecting
-  if (isPendingMembership || hasTeamMembership) {
+  if (isPendingMembership || hasTeamMembership || isMancebo) {
     return (
       <OnboardingLayout userEmail={userEmail}>
         <OnboardingCard title={t("loading")} subtitle="" />
