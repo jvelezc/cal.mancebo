@@ -13,16 +13,26 @@ vi.mock("./ConfirmationEmailForm", () => ({
     onSave,
     onDirty,
   }: {
-    settings: { workspaceName: string };
+    settings: { workspaceName: string; saved?: { subject: string } };
     onSave: (value: object) => void;
     onDirty: (value: boolean) => void;
   }) => (
     <div>
       <h2>{settings.workspaceName} wording</h2>
-      <input aria-label="Draft wording" defaultValue="Keep my draft" onChange={() => onDirty(true)} />
+      <input
+        aria-label="Draft wording"
+        defaultValue={settings.saved?.subject ?? "Keep my draft"}
+        onChange={() => onDirty(true)}
+      />
       <button
         onClick={() => onSave({ enabled: true, template: { subject: "Your visit" }, eventTypeIds: [5] })}>
         Save draft
+      </button>
+      <button
+        onClick={() =>
+          onSave({ enabled: false, template: { subject: "Unsaved changed words" }, eventTypeIds: [5] })
+        }>
+        Reset draft
       </button>
     </div>
   ),
@@ -88,7 +98,7 @@ describe("appointment email settings journey", () => {
         status: 409,
       })
     );
-    render(<AppointmentEmailSettings metadata={metadata} />);
+    render(<AppointmentEmailSettings metadata={metadata} initialScope={first.id} />);
     await screen.findByRole("heading", { name: "GentleBirth wording" });
     fireEvent.change(screen.getByLabelText("Draft wording"), { target: { value: "My unsaved words" } });
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
@@ -101,7 +111,7 @@ describe("appointment email settings journey", () => {
   it("keeps the selected workspace and draft when discarding unsaved changes is declined", async () => {
     fetcher.mockResolvedValue(response(first.name));
     vi.spyOn(window, "confirm").mockReturnValue(false);
-    render(<AppointmentEmailSettings metadata={metadata} />);
+    render(<AppointmentEmailSettings metadata={metadata} initialScope={first.id} />);
     await screen.findByRole("heading", { name: "GentleBirth wording" });
     fireEvent.change(screen.getByLabelText("Draft wording"), { target: { value: "My draft" } });
     fireEvent.change(screen.getByLabelText("Edit emails for"), { target: { value: second.id } });
@@ -123,5 +133,49 @@ describe("appointment email settings journey", () => {
     expect(screen.getByRole("alert").textContent).toContain("could not check your account permissions");
     expect(screen.queryByText(/Only a workspace administrator/)).toBeNull();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("does not select another workspace when the requested scope is unauthorized", () => {
+    render(
+      <AppointmentEmailSettings
+        metadata={{ ...metadata, canEditPlatform: true }}
+        initialScope="unrelated-workspace"
+      />
+    );
+    expect((screen.getByLabelText("Edit emails for") as HTMLSelectElement).value).toBe("");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("redacts an unexpected load failure and does not retry automatically", async () => {
+    fetcher.mockRejectedValue(new TypeError("private-source-and-credential"));
+    render(<AppointmentEmailSettings metadata={metadata} initialScope={first.id} />);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("Email settings could not be loaded. Try reloading the saved settings.");
+    expect(document.body.textContent).not.toContain("private-source-and-credential");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("restores the last saved custom words after a successful inheritance reset", async () => {
+    fetcher.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          settings: {
+            workspaceName: first.name,
+            revision: 4,
+            saved: {
+              subject: "Last saved words",
+              greeting: "Hello",
+              introduction: "Welcome",
+              closing: "Thank you",
+            },
+          },
+        })
+      )
+    );
+    fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ revision: 5 })));
+    render(<AppointmentEmailSettings metadata={metadata} initialScope={first.id} />);
+    await screen.findByRole("heading", { name: "GentleBirth wording" });
+    fireEvent.change(screen.getByLabelText("Draft wording"), { target: { value: "Unsaved changed words" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reset draft" }));
+    await screen.findByText(/Email settings saved/);
+    expect((screen.getByLabelText("Draft wording") as HTMLInputElement).value).toBe("Last saved words");
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 });

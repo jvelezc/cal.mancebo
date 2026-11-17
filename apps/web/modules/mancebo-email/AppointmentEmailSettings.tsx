@@ -8,6 +8,18 @@ import { ConfirmationEmailForm } from "./ConfirmationEmailForm";
 import type { EmailFormChange } from "./ConfirmationEmailForm";
 
 export type EmailSettingsMetadata = { canEditPlatform: boolean; workspaces: { id: string; name: string }[] };
+class EmailSettingsRequestError extends Error {}
+function requestError(
+  value: { message?: string; diagnosticId?: string },
+  fallback: string,
+  referenceLabel: string
+) {
+  const reference =
+    value.diagnosticId && /^[a-f0-9-]{36}$/i.test(value.diagnosticId)
+      ? `${referenceLabel}: ${value.diagnosticId}`
+      : "";
+  return new EmailSettingsRequestError([value.message ?? fallback, reference].filter(Boolean).join(" "));
+}
 export default function AppointmentEmailSettings({
   metadata,
   initialScope,
@@ -23,7 +35,13 @@ export default function AppointmentEmailSettings({
     ...metadata.workspaces,
   ];
   const [scope, setScope] = useState(
-    choices.some((choice) => choice.id === initialScope) ? (initialScope ?? "") : (choices[0]?.id ?? "")
+    initialScope
+      ? choices.some((choice) => choice.id === initialScope)
+        ? initialScope
+        : ""
+      : choices.length === 1
+        ? (choices[0]?.id ?? "")
+        : ""
   );
   const [loaded, setLoaded] = useState<{ scope: string; settings: ManceboEmailSettings } | null>(null);
   const [error, setError] = useState("");
@@ -56,13 +74,16 @@ export default function AppointmentEmailSettings({
             message?: string;
             diagnosticId?: string;
           };
-          if (!response.ok) throw new Error(value.message ?? t("mancebo_email_load_failed"));
+          if (!response.ok)
+            throw requestError(value, t("mancebo_email_load_failed"), t("mancebo_email_support_reference"));
           if (!controller.signal.aborted && current === generation.current)
             setLoaded({ scope, settings: value.settings });
         })
         .catch((failure: unknown) => {
           if (!controller.signal.aborted && current === generation.current)
-            setError(failure instanceof Error ? failure.message : t("mancebo_email_load_failed"));
+            setError(
+              failure instanceof EmailSettingsRequestError ? failure.message : t("mancebo_email_load_failed")
+            );
         });
     return () => {
       controller.abort();
@@ -85,15 +106,25 @@ export default function AppointmentEmailSettings({
         body: JSON.stringify({ ...value, scope, expectedRevision: loaded.settings.revision }),
       });
       const result = (await response.json()) as { revision: number; message?: string; diagnosticId?: string };
-      if (!response.ok) throw new Error(result.message ?? t("mancebo_email_save_failed"));
+      if (!response.ok)
+        throw requestError(result, t("mancebo_email_save_failed"), t("mancebo_email_support_reference"));
       if (controller.signal.aborted || current !== generation.current) return;
+      const previous = !value.enabled ? loaded.settings.saved : null;
+      const savedWords = previous
+        ? {
+            subject: previous.subject,
+            greeting: previous.greeting,
+            introduction: previous.introduction,
+            closing: previous.closing,
+          }
+        : value.template;
       setLoaded({
         scope,
         settings: {
           ...loaded.settings,
           revision: result.revision,
           saved: {
-            ...value.template,
+            ...savedWords,
             enabled: value.enabled,
             revision: result.revision,
             updatedAt: new Date().toISOString(),
@@ -104,7 +135,9 @@ export default function AppointmentEmailSettings({
       setNotice(t("mancebo_email_saved"));
     } catch (failure) {
       if (!controller.signal.aborted && current === generation.current)
-        setError(failure instanceof Error ? failure.message : t("mancebo_email_save_failed"));
+        setError(
+          failure instanceof EmailSettingsRequestError ? failure.message : t("mancebo_email_save_failed")
+        );
     } finally {
       if (!controller.signal.aborted && current === generation.current) setSaving(false);
     }
@@ -112,6 +145,13 @@ export default function AppointmentEmailSettings({
   return (
     <Shell heading={t("mancebo_email_title")} subtitle={t("mancebo_email_purpose")}>
       <div className="mx-auto max-w-6xl space-y-6">
+        <a
+          href="https://mancebo.ai/docs?topic=appointment-emails"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-emphasis inline-block underline">
+          {t("mancebo_email_guide")}
+        </a>
         <p className="text-default">{t("mancebo_email_purpose")}</p>
         {!choices.length ? (
           permissionsUnavailable ? (
@@ -140,6 +180,9 @@ export default function AppointmentEmailSettings({
                   saveRequest.current?.abort();
                   setScope(event.target.value);
                 }}>
+                <option value="" disabled>
+                  {t("mancebo_email_choose_scope")}
+                </option>
                 {choices.map((choice) => (
                   <option key={choice.id} value={choice.id}>
                     {choice.name}
@@ -147,7 +190,13 @@ export default function AppointmentEmailSettings({
                 ))}
               </select>
               <p className="text-subtle mt-2 text-sm">
-                {t(scope === "platform" ? "mancebo_email_global_hint" : "mancebo_email_workspace_hint")}
+                {t(
+                  !scope
+                    ? "mancebo_email_choose_scope"
+                    : scope === "platform"
+                      ? "mancebo_email_global_hint"
+                      : "mancebo_email_workspace_hint"
+                )}
               </p>
             </div>
             {error && (
@@ -171,14 +220,16 @@ export default function AppointmentEmailSettings({
             </p>
             {loaded?.scope === scope ? (
               <ConfirmationEmailForm
-                key={`${scope}-${reload}`}
+                key={`${scope}-${reload}-${loaded.settings.revision}`}
                 settings={loaded.settings}
                 saving={saving}
                 onSave={save}
                 onDirty={setDirty}
               />
             ) : (
-              !error && <p role="status">{t("mancebo_email_loading")}</p>
+              !error && (
+                <p role="status">{t(scope ? "mancebo_email_loading" : "mancebo_email_choose_scope")}</p>
+              )
             )}
           </>
         )}

@@ -48,7 +48,10 @@ const getNavigationItems = (): NavigationItemType[] => [
         },
       },
       {
-        name: "installed_apps",
+        name:
+          process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true"
+            ? "mancebo_connections_title"
+            : "installed_apps",
         href: "/apps/installed/calendar",
         isCurrent: ({ pathname: path }) =>
           (path?.startsWith("/apps/installed/") ?? false) ||
@@ -56,6 +59,9 @@ const getNavigationItems = (): NavigationItemType[] => [
       },
     ],
   },
+  ...(process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true"
+    ? [{ name: "mancebo_email_title", href: "/email-templates", icon: "mail" as const, moreOnMobile: true }]
+    : []),
   {
     name: MORE_SEPARATOR_NAME,
     href: "/more",
