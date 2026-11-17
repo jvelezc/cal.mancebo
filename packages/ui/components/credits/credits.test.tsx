@@ -18,11 +18,11 @@ describe("Tests for Credits component", () => {
 
     const creditsLinkElement = screen.getByRole("link", { name: /Mancebo\.ai/i });
     expect(creditsLinkElement).toBeInTheDocument();
-    expect(creditsLinkElement).toHaveAttribute("href", "https://go.cal.com/credits");
+    expect(creditsLinkElement).toHaveAttribute("href", "https://mancebo.ai");
 
     const versionLinkElement = screen.getByRole("link", { name: /mockedVersion/i });
     expect(versionLinkElement).toBeInTheDocument();
-    expect(versionLinkElement).toHaveAttribute("href", "https://go.cal.com/releases");
+    expect(versionLinkElement).toHaveAttribute("href", "https://github.com/jvelezc/cal.mancebo");
   });
 
   test("Should render credits section with correct text", () => {
