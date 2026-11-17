@@ -44,6 +44,56 @@ const mount = () =>
     </ManceboSessionBridge>
   );
 describe("Mancebo appointment browser session boundary", () => {
+  it("keeps the verified session connected during ordinary client navigation", async () => {
+    const view = mount();
+    send(session("token"));
+    await screen.findByText("Private appointments");
+    mocks.pathname = "/availability";
+    view.rerender(
+      <ManceboSessionBridge>
+        <p>Private appointments</p>
+      </ManceboSessionBridge>
+    );
+    send(session("token"));
+    await act(async () => {});
+    expect(mocks.signIn).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Private appointments")).toBeDefined();
+    expect(screen.queryByRole("link", { name: "mancebo_appointments_continue" })).toBeNull();
+  });
+
+  it("shows a loading status and reserves the return action for a real connection failure", async () => {
+    mocks.signIn.mockResolvedValue({ error: "AccessDenied" });
+    mount();
+    expect(screen.getByRole("status").textContent).toBe("mancebo_appointments_connecting");
+    expect(screen.queryByRole("link", { name: "mancebo_appointments_continue" })).toBeNull();
+    send(session("token"));
+    await screen.findByText("mancebo_appointments_connection_failed");
+    expect(screen.getByRole("link", { name: "mancebo_appointments_continue" }).getAttribute("target")).toBe(
+      "_top"
+    );
+    expect(screen.queryByText("Private appointments")).toBeNull();
+  });
+
+  it("signs out once when a connected customer navigates to the logout route", async () => {
+    const view = mount();
+    send(session("token"));
+    await screen.findByText("Private appointments");
+    mocks.pathname = "/auth/logout";
+    view.rerender(
+      <ManceboSessionBridge>
+        <p>Private appointments</p>
+      </ManceboSessionBridge>
+    );
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1));
+    send(session("late-token"));
+    await act(async () => {});
+    expect(mocks.signIn).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Private appointments")).toBeNull();
+    expect(
+      parent.postMessage.mock.calls.filter(([message]) => message.type === "mancebo:appointments-sign-out")
+    ).toHaveLength(1);
+  });
+
   it("closes both sessions when an embedded native logout address is opened", async () => {
     mocks.pathname = "/auth/logout";
     mount();
