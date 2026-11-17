@@ -23,7 +23,7 @@ import {
   UserIcon,
 } from "@coss/ui/icons";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { signOut } from "@calcom/features/auth/lib/mancebo-sign-out";
 import { useEffect, useState } from "react";
 
 declare global {
@@ -165,10 +165,6 @@ export function UserDropdown({ small }: UserDropdownProps) {
           <MenuItem
             variant="destructive"
             onClick={() => {
-              if (process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true") {
-                window.dispatchEvent(new Event("mancebo:appointments-sign-out"));
-                return;
-              }
               signOut({ callbackUrl: "/auth/logout" });
             }}>
             <LogOutIcon />

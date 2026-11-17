@@ -91,7 +91,8 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
       });
     };
     window.addEventListener("mancebo:appointments-sign-out", requestSignOut);
-    send("mancebo:appointments-ready");
+    if (pathname === "/auth/logout") requestSignOut();
+    else send("mancebo:appointments-ready");
     // Reconcile after page navigation and obtain fresh Mancebo tokens before expiry.
     const timer = window.setInterval(() => send("mancebo:appointments-ready"), 30000);
     return () => {

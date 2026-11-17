@@ -8,7 +8,8 @@ import { SettingsToggle } from "@calcom/ui/components/form";
 import { SkeletonButton, SkeletonContainer, SkeletonText } from "@calcom/ui/components/skeleton";
 import DisableTwoFactorModal from "@components/settings/DisableTwoFactorModal";
 import EnableTwoFactorModal from "@components/settings/EnableTwoFactorModal";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "@calcom/features/auth/lib/mancebo-sign-out";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 const SkeletonLoader = () => {
