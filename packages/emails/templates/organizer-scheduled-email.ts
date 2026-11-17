@@ -10,6 +10,7 @@ import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 import generateIcsFile from "../lib/generateIcsFile";
 import { GenerateIcsRole } from "../lib/generateIcsFile";
 import renderEmail from "../src/renderEmail";
+import { renderManceboConfirmation } from "../lib/manceboConfirmationDelivery";
 import BaseEmail from "./_base-email";
 
 export type Reassigned = { name: string | null; email: string; reason?: string; byUser?: string };
@@ -41,6 +42,33 @@ export default class OrganizerScheduledEmail extends BaseEmail {
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {
     const clonedCalEvent = cloneDeep(this.calEvent);
     const toAddresses = [this.teamMember?.email || this.calEvent.organizer.email];
+    if (process.env.MANCEBO_AUTH_ENABLED === "true" && !this.newSeat && !this.reassigned) {
+      const icalEvent = generateIcsFile({
+        calEvent: this.calEvent,
+        role: GenerateIcsRole.ORGANIZER,
+        status: "CONFIRMED",
+      });
+      const recipient = this.teamMember
+        ? { ...this.calEvent.organizer, ...this.teamMember }
+        : this.calEvent.organizer;
+      const content = await renderManceboConfirmation({
+        event: this.calEvent,
+        recipient,
+        attendee: false,
+        calendarAttachmentAvailable: Boolean(icalEvent?.content),
+      });
+      return {
+        ...content,
+        icalEvent,
+        from: `${EMAIL_FROM_NAME} <${this.getMailerOptions().from}>`,
+        to: toAddresses.join(","),
+        ...getReplyToHeader(
+          this.calEvent,
+          this.calEvent.attendees.map(({ email }) => email),
+          true
+        ),
+      };
+    }
 
     return {
       icalEvent: generateIcsFile({

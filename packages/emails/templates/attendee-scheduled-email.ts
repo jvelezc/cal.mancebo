@@ -1,10 +1,12 @@
 import { getRichDescription } from "@calcom/lib/CalEventParser";
 import { getReplyToHeader } from "@calcom/lib/getReplyToHeader";
 import { TimeFormat } from "@calcom/lib/timeFormat";
+import { EMAIL_FROM_NAME } from "@calcom/lib/constants";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 import type { TFunction } from "i18next";
 import { default as cloneDeep } from "lodash/cloneDeep";
 import generateIcsFile, { GenerateIcsRole } from "../lib/generateIcsFile";
+import { renderManceboConfirmation } from "../lib/manceboConfirmationDelivery";
 import renderEmail from "../src/renderEmail";
 import BaseEmail from "./_base-email";
 
@@ -38,6 +40,26 @@ export default class AttendeeScheduledEmail extends BaseEmail {
 
   protected async getNodeMailerPayload(): Promise<Record<string, unknown>> {
     const clonedCalEvent = cloneDeep(this.calEvent);
+    if (process.env.MANCEBO_AUTH_ENABLED === "true") {
+      const icalEvent = generateIcsFile({
+        calEvent: this.calEvent,
+        role: GenerateIcsRole.ATTENDEE,
+        status: "CONFIRMED",
+      });
+      const content = await renderManceboConfirmation({
+        event: this.calEvent,
+        recipient: this.attendee,
+        attendee: true,
+        calendarAttachmentAvailable: Boolean(icalEvent?.content),
+      });
+      return {
+        ...content,
+        icalEvent,
+        to: `${this.attendee.name} <${this.attendee.email}>`,
+        from: `${EMAIL_FROM_NAME} <${this.getMailerOptions().from}>`,
+        ...getReplyToHeader(this.calEvent),
+      };
+    }
 
     return {
       icalEvent: generateIcsFile({
