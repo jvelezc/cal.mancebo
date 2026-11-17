@@ -327,6 +327,9 @@ export default function Success(props: PageProps) {
       }
       return t(`needs_to_be_confirmed_or_rejected${titleSuffix}`);
     }
+    if (process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true") {
+      return t("mancebo_booking_saved_notice");
+    }
     if (bookingInfo.user) {
       const isAttendee = bookingInfo.attendees.find((attendee) => attendee.email === session?.user?.email);
       const attendee = bookingInfo.attendees[0]?.name || bookingInfo.attendees[0]?.email || "Nameless";

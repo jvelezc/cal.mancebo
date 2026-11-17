@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { decodeHTML } from "entities";
 import { z } from "zod";
 
@@ -10,6 +11,7 @@ import { setTestEmail } from "@calcom/lib/testEmails";
 import { prisma } from "@calcom/prisma";
 
 import { sanitizeDisplayName } from "../lib/sanitizeDisplayName";
+import { mailAcceptanceEvidence, mailFailureEvidence } from "../lib/mailDeliveryEvidence";
 
 export default class BaseEmail {
   name = "";
@@ -30,6 +32,12 @@ export default class BaseEmail {
     return {};
   }
   public async sendEmail() {
+    const diagnosticsId = randomUUID();
+    const event = "calEvent" in this ? this.calEvent : undefined;
+    const bookingUid =
+      typeof event === "object" && event !== null && "uid" in event && typeof event.uid === "string"
+        ? event.uid
+        : undefined;
     const featuresRepository = new FeaturesRepository(prisma);
     const emailsDisabled = await featuresRepository.checkIfFeatureIsEnabledGlobally("emails");
     /** If email kill switch exists and is active, we prevent emails being sent. */
@@ -78,20 +86,15 @@ export default class BaseEmail {
         (_err, info) => {
           if (_err) {
             const err = getServerErrorFromUnknown(_err);
-            this.printNodeMailerError(err);
             reject(err);
           } else {
+            console.info(JSON.stringify(mailAcceptanceEvidence(this.name, info, diagnosticsId, bookingUid)));
             resolve(info);
           }
         }
       )
-    ).catch((e) =>
-      console.error(
-        "sendEmail",
-        `from: ${"from" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.from : ""}`,
-        `subject: ${"subject" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.subject : ""}`,
-        e
-      )
+    ).catch((error) =>
+      this.printNodeMailerError(getServerErrorFromUnknown(error), diagnosticsId, bookingUid)
     );
     return new Promise((resolve) => resolve("send mail async"));
   }
@@ -102,9 +105,9 @@ export default class BaseEmail {
       headers: serverConfig.headers,
     };
   }
-  protected printNodeMailerError(error: Error): void {
+  protected printNodeMailerError(error: Error, diagnosticsId: string, bookingUid?: string): void {
     /** Don't clog the logs with unsent emails in E2E */
-    if (process.env.NEXT_PUBLIC_IS_E2E) return;
-    console.error(`${this.name}_ERROR`, error);
+    if (process.env.NEXT_PUBLIC_IS_E2E === "1") return;
+    console.error(JSON.stringify(mailFailureEvidence(this.name, error, diagnosticsId, bookingUid)));
   }
 }

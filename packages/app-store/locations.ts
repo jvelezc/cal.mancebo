@@ -477,6 +477,9 @@ export function getSuccessPageLocationMessage(
     if (bookingStatus === BookingStatus.CANCELLED || bookingStatus === BookingStatus.REJECTED) {
       locationToDisplay = t("web_conference");
     } else if (isConfirmed) {
+      if (process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true") {
+        return t("mancebo_meeting_link_missing");
+      }
       locationToDisplay = `${getHumanReadableLocationValue(location, t)}: ${t(
         "meeting_url_in_confirmation_email"
       )}`;
