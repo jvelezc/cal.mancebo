@@ -22,11 +22,13 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
     let active = true;
     let generation = 0;
     let acceptedToken: string | null = null;
+    let signingOut = false;
     let queue = Promise.resolve();
     const send = (type: string, subject?: string) =>
       window.parent.postMessage({ type, subject }, manceboOrigin);
     const receive = (event: MessageEvent) => {
       if (event.origin !== manceboOrigin || event.source !== window.parent) return;
+      if (signingOut) return;
       if (event.data?.type !== "mancebo:appointments-session") return;
       const { accessToken, subject } = event.data;
       if (
@@ -74,6 +76,21 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
       });
     };
     window.addEventListener("message", receive);
+    const requestSignOut = () => {
+      signingOut = true;
+      generation++;
+      acceptedToken = null;
+      setConnected(false);
+      queue = queue.then(async () => {
+        try {
+          await signOut({ redirect: false });
+          send("mancebo:appointments-sign-out");
+        } catch {
+          if (active) setFailed(true);
+        }
+      });
+    };
+    window.addEventListener("mancebo:appointments-sign-out", requestSignOut);
     send("mancebo:appointments-ready");
     // Reconcile after page navigation and obtain fresh Mancebo tokens before expiry.
     const timer = window.setInterval(() => send("mancebo:appointments-ready"), 30000);
@@ -82,6 +99,7 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
       generation++;
       window.clearInterval(timer);
       window.removeEventListener("message", receive);
+      window.removeEventListener("mancebo:appointments-sign-out", requestSignOut);
     };
   }, [pathname]);
 

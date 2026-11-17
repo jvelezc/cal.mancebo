@@ -7,7 +7,8 @@ import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { readManceboPrincipal } from "./mancebo-principal";
 
-export const manceboAuthEnabled = process.env.MANCEBO_AUTH_ENABLED === "true";
+export const manceboAuthEnabled =
+  process.env.MANCEBO_AUTH_ENABLED === "true" || process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true";
 const userSelect = {
   id: true,
   uuid: true,
