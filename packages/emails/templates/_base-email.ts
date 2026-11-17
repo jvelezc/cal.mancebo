@@ -107,7 +107,7 @@ export default class BaseEmail {
   }
   protected printNodeMailerError(error: Error, diagnosticsId: string, bookingUid?: string): void {
     /** Don't clog the logs with unsent emails in E2E */
-    if (process.env.NEXT_PUBLIC_IS_E2E === "true") return;
+    if (process.env.NEXT_PUBLIC_IS_E2E === "1") return;
     console.error(JSON.stringify(mailFailureEvidence(this.name, error, diagnosticsId, bookingUid)));
   }
 }
