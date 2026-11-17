@@ -37,9 +37,9 @@ afterEach(() => {
   cleanup();
   Object.defineProperty(window, "parent", { configurable: true, value: originalParent });
 });
-const mount = () =>
+const mount = (renderedSubject: string | null = subject) =>
   render(
-    <ManceboSessionBridge>
+    <ManceboSessionBridge renderedSubject={renderedSubject}>
       <p>Private appointments</p>
     </ManceboSessionBridge>
   );
@@ -50,7 +50,7 @@ describe("Mancebo appointment browser session boundary", () => {
     await screen.findByText("Private appointments");
     mocks.pathname = "/availability";
     view.rerender(
-      <ManceboSessionBridge>
+      <ManceboSessionBridge renderedSubject={subject}>
         <p>Private appointments</p>
       </ManceboSessionBridge>
     );
@@ -80,7 +80,7 @@ describe("Mancebo appointment browser session boundary", () => {
     await screen.findByText("Private appointments");
     mocks.pathname = "/auth/logout";
     view.rerender(
-      <ManceboSessionBridge>
+      <ManceboSessionBridge renderedSubject={subject}>
         <p>Private appointments</p>
       </ManceboSessionBridge>
     );
@@ -181,8 +181,34 @@ describe("Mancebo appointment browser session boundary", () => {
     await act(async () => {
       finish({ error: null });
     });
-    await screen.findByText("Private appointments");
+    await waitFor(() => expect(mocks.getSession).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(screen.queryByText("Private appointments")).toBeNull();
     expect(mocks.signIn.mock.calls.map((call) => call[1].accessToken)).toEqual(["old-token", "new-token"]);
     expect(mocks.getSession).toHaveBeenCalledTimes(1);
+  });
+  it("does not reveal server-rendered content belonging to another identity after handoff", async () => {
+    mount("another-rendered-account");
+    send(session("token"));
+    await waitFor(() => expect(mocks.getSession).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(screen.queryByText("Private appointments")).toBeNull();
+    expect(parent.postMessage).not.toHaveBeenCalledWith(
+      { type: "mancebo:appointments-connected", subject },
+      "https://mancebo.ai"
+    );
+  });
+  it("revalidates a repeated token when the parent changes its claimed identity", async () => {
+    mount();
+    send(session("token"));
+    await screen.findByText("Private appointments");
+    send(session("token", "another-parent-account"));
+    await screen.findByText("mancebo_appointments_connection_failed");
+    expect(mocks.signIn).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("Private appointments")).toBeNull();
+    expect(parent.postMessage).not.toHaveBeenCalledWith(
+      { type: "mancebo:appointments-connected", subject: "another-parent-account" },
+      "https://mancebo.ai"
+    );
   });
 });
