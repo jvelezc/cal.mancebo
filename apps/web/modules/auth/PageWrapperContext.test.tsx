@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ token: vi.fn(), headers: vi.fn(), cookies: vi.
 vi.mock("next/headers", () => ({ headers: mocks.headers, cookies: mocks.cookies }));
 vi.mock("next-auth/jwt", () => ({ getToken: mocks.token }));
 vi.mock("next/script", () => ({ default: () => null }));
-vi.mock("@components/PageWrapperAppDir", () => ({
+vi.mock("../../components/PageWrapperAppDir", () => ({
   default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 vi.mock("../../modules/auth/ManceboSessionBridge", () => ({
