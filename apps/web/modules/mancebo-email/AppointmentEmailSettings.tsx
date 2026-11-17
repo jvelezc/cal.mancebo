@@ -112,6 +112,13 @@ export default function AppointmentEmailSettings({
   return (
     <Shell heading={t("mancebo_email_title")} subtitle={t("mancebo_email_purpose")}>
       <div className="mx-auto max-w-6xl space-y-6">
+        <a
+          href="https://mancebo.ai/docs?topic=appointment-emails"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-emphasis inline-block underline">
+          {t("mancebo_email_guide")}
+        </a>
         <p className="text-default">{t("mancebo_email_purpose")}</p>
         {!choices.length ? (
           permissionsUnavailable ? (
