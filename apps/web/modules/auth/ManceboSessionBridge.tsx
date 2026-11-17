@@ -3,7 +3,7 @@
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { usePathname } from "next/navigation";
 import { getSession, signIn, signOut } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const manceboOrigin = "https://mancebo.ai";
 
@@ -11,6 +11,8 @@ const manceboOrigin = "https://mancebo.ai";
 export function ManceboSessionBridge({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
   const pathname = usePathname();
+  const currentPath = useRef(pathname);
+  currentPath.current = pathname;
   const [connected, setConnected] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -61,7 +63,7 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
           if (!active || current !== generation) return;
           if (session?.manceboSubject !== subject) throw new Error("MANCEBO_SIGN_IN_REQUIRED");
           acceptedToken = accessToken;
-          if (pathname?.startsWith("/auth/") || pathname === "/signup") {
+          if (currentPath.current?.startsWith("/auth/") || currentPath.current === "/signup") {
             window.location.replace("/event-types");
             return;
           }
@@ -77,6 +79,7 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
     };
     window.addEventListener("message", receive);
     const requestSignOut = () => {
+      if (signingOut) return;
       signingOut = true;
       generation++;
       acceptedToken = null;
@@ -91,10 +94,11 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
       });
     };
     window.addEventListener("mancebo:appointments-sign-out", requestSignOut);
-    if (pathname === "/auth/logout") requestSignOut();
-    else send("mancebo:appointments-ready");
-    // Reconcile after page navigation and obtain fresh Mancebo tokens before expiry.
-    const timer = window.setInterval(() => send("mancebo:appointments-ready"), 30000);
+    if (currentPath.current !== "/auth/logout") send("mancebo:appointments-ready");
+    // Keep one verified bridge across client navigation; renew tokens before expiry.
+    const timer = window.setInterval(() => {
+      if (!signingOut) send("mancebo:appointments-ready");
+    }, 30000);
     return () => {
       active = false;
       generation++;
@@ -102,18 +106,40 @@ export function ManceboSessionBridge({ children }: { children: React.ReactNode }
       window.removeEventListener("message", receive);
       window.removeEventListener("mancebo:appointments-sign-out", requestSignOut);
     };
-  }, [pathname]);
+  }, []);
+
+  useEffect(() => {
+    if (pathname === "/auth/logout") window.dispatchEvent(new Event("mancebo:appointments-sign-out"));
+    else if (connected && (pathname?.startsWith("/auth/") || pathname === "/signup"))
+      window.location.replace("/event-types");
+  }, [pathname, connected]);
 
   if (connected && !pathname?.startsWith("/auth/") && pathname !== "/signup") return <>{children}</>;
   return (
-    <main className="mx-auto max-w-lg space-y-4 px-6 py-16">
-      <h1 className="text-2xl font-semibold">Mancebo.ai</h1>
-      <p role="status">
+    <main
+      className="mx-auto flex min-h-72 max-w-lg flex-col items-center justify-center gap-4 px-6 py-16"
+      aria-busy={!failed}>
+      {!failed && (
+        <svg
+          aria-hidden="true"
+          className="h-6 w-6 animate-spin text-emphasis motion-reduce:animate-none"
+          viewBox="0 0 24 24"
+          fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" opacity="0.2" />
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )}
+      <p role="status" aria-live="polite" className="text-center text-sm text-muted">
         {t(failed ? "mancebo_appointments_connection_failed" : "mancebo_appointments_connecting")}
       </p>
-      <a className="underline" href={`${manceboOrigin}/appointments`} target="_top">
-        {t("mancebo_appointments_continue")}
-      </a>
+      {failed && (
+        <a
+          className="rounded-sm underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+          href={`${manceboOrigin}/appointments`}
+          target="_top">
+          {t("mancebo_appointments_continue")}
+        </a>
+      )}
     </main>
   );
 }
