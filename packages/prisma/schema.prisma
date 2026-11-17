@@ -155,6 +155,7 @@ enum CancellationReasonRequirement {
 
 model EventType {
   id                Int     @id @default(autoincrement())
+  manceboEmailWorkspace ManceboEventEmailWorkspace?
   /// @zod.string.min(1)
   title             String
   /// @zod.import(["import { eventTypeSlug } from '../../zod-utils'"]).custom.use(eventTypeSlug)
@@ -2850,4 +2851,28 @@ model AttributeSyncFieldMapping {
 
   @@unique([integrationAttributeSyncId, attributeId])
   @@index([integrationAttributeSyncId])
+}
+
+model ManceboAppointmentEmailTemplate {
+  scopeKey                  String   @id
+  workspaceId               String?  @db.Uuid
+  enabled                   Boolean  @default(true)
+  subject                   String   @db.VarChar(180)
+  greeting                  String   @db.VarChar(300)
+  introduction              String
+  closing                   String
+  revision                  Int      @default(1)
+  updatedByManceboUserId     String   @db.Uuid
+  updatedAt                 DateTime @default(now()) @updatedAt
+}
+
+model ManceboEventEmailWorkspace {
+  eventTypeId               Int       @id
+  eventType                 EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  workspaceId               String    @db.Uuid
+  workspaceName             String    @db.VarChar(120)
+  linkedByManceboUserId      String    @db.Uuid
+  updatedAt                 DateTime  @default(now()) @updatedAt
+
+  @@index([workspaceId])
 }

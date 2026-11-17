@@ -2,8 +2,8 @@ import { decodeJwt } from "jose";
 import { z } from "zod";
 
 // Existing Mancebo identity service; this public key grants no administrator access.
-const identityUrl = "https://ffpqxlrfbjyvxsfrnyqm.supabase.co";
-const publishableKey = "sb_publishable_WSKvbqhp2yGmPWJOcNRhiw_Gp18jl62";
+export const identityUrl = "https://ffpqxlrfbjyvxsfrnyqm.supabase.co";
+export const publishableKey = "sb_publishable_WSKvbqhp2yGmPWJOcNRhiw_Gp18jl62";
 const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
