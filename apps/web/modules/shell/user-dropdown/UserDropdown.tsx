@@ -1,4 +1,4 @@
-import { ROADMAP } from "@calcom/lib/constants";
+import process from "node:process";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import useMeQuery from "@calcom/trpc/react/hooks/useMeQuery";
 import classNames from "@calcom/ui/classNames";
@@ -18,14 +18,12 @@ import {
   ChevronUpIcon,
   CircleHelpIcon,
   LogOutIcon,
-  MapIcon,
   MoonIcon,
   SettingsIcon,
   UserIcon,
 } from "@coss/ui/icons";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
 
 declare global {
@@ -80,25 +78,6 @@ export function UserDropdown({ small }: UserDropdownProps) {
   }, [user?.username]);
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [openSupportAfterClose, setOpenSupportAfterClose] = useState(false);
-
-  const handleHelpClick = (e?: MouseEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-
-    setOpenSupportAfterClose(true);
-    setMenuOpen(false);
-  };
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!menuOpen && openSupportAfterClose) {
-      setTimeout(() => {
-        window.Support?.open();
-      }, 0);
-      setOpenSupportAfterClose(false);
-    }
-  }, [menuOpen, openSupportAfterClose]);
 
   // Prevent rendering dropdown if user isn't available.
   // We don't want to show nameless user.
@@ -177,11 +156,7 @@ export function UserDropdown({ small }: UserDropdownProps) {
             <MenuSeparator />
           </>
 
-          <MenuItem render={<a href={ROADMAP} target="_blank" rel="noreferrer" />}>
-            <MapIcon />
-            {t("visit_roadmap")}
-          </MenuItem>
-          <MenuItem onClick={handleHelpClick}>
+          <MenuItem render={<a href="https://mancebo.ai/docs?topic=appointments" target="_top" />}>
             <CircleHelpIcon />
             {t("help")}
           </MenuItem>
@@ -190,6 +165,10 @@ export function UserDropdown({ small }: UserDropdownProps) {
           <MenuItem
             variant="destructive"
             onClick={() => {
+              if (process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true") {
+                window.dispatchEvent(new Event("mancebo:appointments-sign-out"));
+                return;
+              }
               signOut({ callbackUrl: "/auth/logout" });
             }}>
             <LogOutIcon />

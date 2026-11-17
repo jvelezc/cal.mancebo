@@ -38,6 +38,25 @@ const mount = () =>
     </ManceboSessionBridge>
   );
 describe("Mancebo appointment browser session boundary", () => {
+  it("clears the native session before requesting Mancebo sign-out and refuses new handoffs", async () => {
+    mount();
+    send(session("token"));
+    await screen.findByText("Private appointments");
+    act(() => {
+      window.dispatchEvent(new Event("mancebo:appointments-sign-out"));
+    });
+    await waitFor(() =>
+      expect(parent.postMessage).toHaveBeenCalledWith(
+        { type: "mancebo:appointments-sign-out", subject: undefined },
+        "https://mancebo.ai"
+      )
+    );
+    expect(mocks.signOut).toHaveBeenCalledWith({ redirect: false });
+    send(session("new-token"));
+    await act(async () => {});
+    expect(mocks.signIn).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Private appointments")).toBeNull();
+  });
   it("shows appointment content only after the owned parent and server identity agree", async () => {
     mount();
     expect(screen.queryByText("Private appointments")).toBeNull();
