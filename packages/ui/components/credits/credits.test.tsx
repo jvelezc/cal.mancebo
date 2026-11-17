@@ -16,7 +16,7 @@ describe("Tests for Credits component", () => {
   test("Should render credits section with links", () => {
     render(<Credits />);
 
-    const creditsLinkElement = screen.getByRole("link", { name: /Cal\.com, Inc\./i });
+    const creditsLinkElement = screen.getByRole("link", { name: /Mancebo\.ai/i });
     expect(creditsLinkElement).toBeInTheDocument();
     expect(creditsLinkElement).toHaveAttribute("href", "https://go.cal.com/credits");
 
