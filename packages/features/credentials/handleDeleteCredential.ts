@@ -13,6 +13,8 @@ import { getCalEventResponses } from "@calcom/features/bookings/lib/getCalEventR
 import { deletePayment } from "@calcom/features/bookings/lib/payment/deletePayment";
 import { deleteWebhookScheduledTriggers } from "@calcom/features/webhooks/lib/scheduleTrigger";
 import { buildNonDelegationCredential } from "@calcom/lib/delegationCredential";
+import { ErrorCode } from "@calcom/lib/errorCodes";
+import { ErrorWithCode } from "@calcom/lib/errors";
 import { isPrismaObjOrUndefined } from "@calcom/lib/isPrismaObj";
 import { parseRecurringEvent } from "@calcom/lib/isRecurringEvent";
 import { getTranslation } from "@calcom/i18n/server";
@@ -50,10 +52,23 @@ const handleDeleteCredential = async ({
   credentialId: number;
   teamId?: number;
 }) => {
+  if (teamId !== undefined) {
+    if (!Number.isSafeInteger(teamId) || teamId <= 0) {
+      throw new ErrorWithCode(ErrorCode.BadRequest, "Invalid connection scope");
+    }
+    const membership = await prisma.membership.findFirst({
+      where: { userId, teamId, accepted: true, role: { in: ["ADMIN", "OWNER"] } },
+      select: { id: true },
+    });
+    if (!membership) {
+      throw new ErrorWithCode(ErrorCode.Forbidden, "You cannot manage this team's connections");
+    }
+  }
+  const ownerFilter = teamId !== undefined ? { teamId } : { userId, teamId: null };
   const credential = await prisma.credential.findFirst({
     where: {
       id: credentialId,
-      ...(teamId ? { teamId } : { userId }),
+      ...ownerFilter,
     },
     select: {
       ...credentialForCalendarServiceSelect,
@@ -68,21 +83,15 @@ const handleDeleteCredential = async ({
   });
 
   if (!credential) {
-    throw new Error("Credential not found");
+    throw new ErrorWithCode(ErrorCode.NotFound, "Connection not found");
   }
 
   const eventTypes = await prisma.eventType.findMany({
     where: {
       OR: [
-        {
-          ...(teamId ? { teamId } : { userId }),
-        },
-        // for managed events
-        {
-          parent: {
-            teamId,
-          },
-        },
+        ownerFilter,
+        // An undefined parent filter would select other customers' managed events.
+        ...(teamId !== undefined ? [{ parent: { teamId } }] : []),
       ],
     },
     select: {
@@ -138,7 +147,7 @@ const handleDeleteCredential = async ({
     // If it's a calendar, remove the destination calendar from the event type
     if (
       credential.app?.categories.includes(AppCategories.calendar) &&
-      eventType.destinationCalendar?.credential?.appId === credential.appId
+      eventType.destinationCalendar?.credential?.id === credential.id
     ) {
       const destinationCalendar = await prisma.destinationCalendar.findUnique({
         where: {
@@ -413,7 +422,6 @@ const handleDeleteCredential = async ({
 
   // if zapier or make get disconnected, delete its apiKey, delete its webhooks and cancel all scheduled jobs
   if (credential.app?.slug === "zapier" || credential.app?.slug === "make") {
-    const ownerFilter = teamId ? { teamId } : { userId };
     await prisma.apiKey.deleteMany({
       where: {
         ...ownerFilter,
@@ -464,6 +472,7 @@ const handleDeleteCredential = async ({
       await prisma.selectedCalendar.deleteMany({
         where: {
           userId: userId,
+          credentialId: credential.id,
           integration: credential.type as string,
           externalId: {
             in: calendarIds,
@@ -482,6 +491,7 @@ const handleDeleteCredential = async ({
   await prisma.credential.delete({
     where: {
       id: credentialId,
+      ...ownerFilter,
     },
   });
 };

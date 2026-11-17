@@ -4793,7 +4793,7 @@
   "mancebo_email_load_failed": "Email settings could not be loaded. Try reloading the saved settings.",
   "mancebo_email_save_failed": "Your changes could not be saved. Keep your wording and try again.",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑",
-  "mancebo_appointments_connecting": "Opening appointments with your Mancebo sign-in…",
+  "mancebo_appointments_connecting": "Opening your appointments…",
   "mancebo_appointments_connection_failed": "Appointments could not connect. Open appointments again from Mancebo, or ask your administrator to check your account connection.",
   "mancebo_appointments_continue": "Continue with Mancebo.ai"
 }
