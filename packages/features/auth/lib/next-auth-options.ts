@@ -52,6 +52,7 @@ import type { Provider } from "next-auth/providers/index";
 import { getOrgUsernameFromEmail } from "../signup/utils/getOrgUsernameFromEmail";
 import { dub } from "./dub";
 import { ErrorCode } from "./ErrorCode";
+import { ManceboCredentialsProvider, manceboAuthEnabled, manceboSessionToken } from "./mancebo-auth";
 import CalComAdapter from "./next-auth-custom-adapter";
 import { verifyPassword } from "./verifyPassword";
 
@@ -388,7 +389,11 @@ export const getOptions = ({
     // decorate the native JWT encode function
     // Impl. detail: We don't pass through as this function is called with encode/decode functions.
     encode: async ({ token, maxAge, secret }) => {
-      log.debug("jwt:encode", safeStringify({ token, maxAge }));
+      if (manceboAuthEnabled) {
+        const remaining = (token?.manceboExpiresAt ?? 0) - Math.floor(Date.now() / 1000);
+        if (remaining <= 0) throw new Error("MANCEBO_SIGN_IN_REQUIRED");
+        return encode({ secret, token, maxAge: Math.min(maxAge ?? remaining, remaining) });
+      }
       if (token?.sub && isNumber(token.sub)) {
         const user = await prisma.user.findFirst({
           where: { id: Number(token.sub) },
@@ -413,7 +418,7 @@ export const getOptions = ({
     verifyRequest: "/auth/verify",
     // newUser: "/auth/new", // New users will be directed here on first sign in (leave the property out if not of interest)
   },
-  providers,
+  providers: manceboAuthEnabled ? [ManceboCredentialsProvider] : providers,
   callbacks: {
     async jwt({
       // Always available but with a little difference in value
@@ -427,7 +432,7 @@ export const getOptions = ({
       // Available only in the first call once the user signs in. Not available in subsequent calls
       account,
     }) {
-      log.debug("callbacks:jwt", safeStringify({ token, user, account, trigger, session }));
+      if (manceboAuthEnabled) return manceboSessionToken(token, user);
       // The data available in 'session' depends on what data was supplied in update method call of session
       if (trigger === "update") {
         return {
@@ -760,12 +765,12 @@ export const getOptions = ({
       );
       return token;
     },
-    async session({ session, token, user }) {
-      log.debug("callbacks:session - Session callback called", safeStringify({ session, token, user }));
+    async session({ session, token }) {
       const hasValidLicense = false;
       const profileId = token.profileId;
       const calendsoSession: Session = {
         ...session,
+        ...(manceboAuthEnabled ? { manceboSubject: token.manceboSubject } : {}),
         profileId,
         upId: token.upId || session.upId,
         hasValidLicense,
@@ -798,7 +803,7 @@ export const getOptions = ({
         account,
       } = params;
 
-      log.debug("callbacks:signin", safeStringify(params));
+      if (manceboAuthEnabled) return account?.provider === "mancebo";
 
       if (account?.provider === "email") {
         return true;

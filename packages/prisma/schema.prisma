@@ -342,6 +342,7 @@ model Credential {
 }
 
 enum IdentityProvider {
+  MANCEBO
   CAL
   GOOGLE
   SAML
@@ -435,6 +436,7 @@ model User {
   backupCodes         String?
   identityProvider    IdentityProvider     @default(CAL)
   identityProviderId  String?
+  manceboUserId       String?              @unique @db.Uuid
   availability        Availability[]
   invitedTo           Int?
   webhooks            Webhook[]
