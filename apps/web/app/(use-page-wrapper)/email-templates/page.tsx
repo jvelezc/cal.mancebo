@@ -7,9 +7,11 @@ import { buildLegacyRequest } from "@lib/buildLegacyCtx";
 import AppointmentEmailSettings from "../../../modules/mancebo-email/AppointmentEmailSettings";
 
 export const metadata = { title: "Appointment emails | Mancebo.ai" };
+export const dynamic = "force-dynamic";
 export default async function Page({ searchParams }: { searchParams: Promise<{ workspace?: string }> }) {
+  const request = buildLegacyRequest(await headers(), await cookies());
   try {
-    const actor = await readManceboEmailActor(buildLegacyRequest(await headers(), await cookies()));
+    const actor = await readManceboEmailActor(request);
     const requested = (await searchParams).workspace;
     return (
       <AppointmentEmailSettings
