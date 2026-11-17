@@ -4780,7 +4780,7 @@
   "mancebo_email_preview": "Email preview",
   "mancebo_email_preview_hint": "Example details only. Previewing or saving does not send an email. Appointment details, calendar attachments and available action links are added automatically.",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑",
-  "mancebo_appointments_connecting": "Opening appointments with your Mancebo sign-in…",
+  "mancebo_appointments_connecting": "Opening your appointments…",
   "mancebo_appointments_connection_failed": "Appointments could not connect. Open appointments again from Mancebo, or ask your administrator to check your account connection.",
   "mancebo_appointments_continue": "Continue with Mancebo.ai"
 }
