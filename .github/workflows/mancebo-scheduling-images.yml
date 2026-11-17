@@ -38,7 +38,7 @@ jobs:
       - run: corepack enable
       - run: yarn install --immutable
       - run: node scripts/mancebo-brand-assets.cjs --check
-      - run: TZ=UTC yarn vitest run packages/features/auth/lib/mancebo-principal.test.ts packages/features/auth/lib/mancebo-auth.test.ts packages/features/auth/lib/mancebo-sign-out.test.ts packages/features/auth/lib/mancebo-workspaces.test.ts apps/web/modules/auth/ManceboSessionBridge.test.tsx apps/web/modules/onboarding/getting-started/onboarding-view.test.tsx apps/web/modules/shell/components/WelcomeToCalcomModal.test.tsx packages/i18n/mancebo-brand.test.ts packages/emails/lib/mailDeliveryEvidence.test.ts packages/emails/lib/manceboConfirmationContent.test.ts apps/web/proxy.test.ts packages/features/credentials/handleDeleteCredential.ownership.test.ts
+      - run: TZ=UTC yarn vitest run packages/features/auth/lib/mancebo-principal.test.ts packages/features/auth/lib/mancebo-auth.test.ts packages/features/auth/lib/mancebo-sign-out.test.ts packages/features/auth/lib/mancebo-workspaces.test.ts apps/web/modules/auth/ManceboSessionBridge.test.tsx apps/web/modules/onboarding/getting-started/onboarding-view.test.tsx apps/web/modules/shell/components/WelcomeToCalcomModal.test.tsx packages/i18n/mancebo-brand.test.ts packages/emails/lib/mailDeliveryEvidence.test.ts packages/emails/lib/manceboConfirmationContent.test.ts packages/emails/lib/manceboEmailPolicy.test.ts apps/web/proxy.test.ts packages/features/credentials/handleDeleteCredential.ownership.test.ts
       - run: yarn type-check:ci --force
 
   build:
