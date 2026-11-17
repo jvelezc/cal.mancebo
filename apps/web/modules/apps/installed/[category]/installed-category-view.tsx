@@ -20,6 +20,7 @@ import { CalendarListContainer } from "@components/apps/CalendarListContainer";
 import InstalledAppsLayout from "@components/apps/layouts/InstalledAppsLayout";
 import { QueryCell } from "@lib/QueryCell";
 import { useReducer } from "react";
+import { ManceboConnectionScope } from "../../components/ManceboConnectionScope";
 import { APP_CATEGORY_ENTRIES, ActiveAppCategoryKeys } from "@calcom/app-store/_utils/getAppCategories";
 
 interface IntegrationsContainerProps {
@@ -230,7 +231,16 @@ export default function InstalledApps({ category, connectedCalendars, installedC
 
   return (
     <>
-      <InstalledAppsLayout heading={t("installed_apps")} subtitle={t("manage_your_connected_apps")}>
+      <InstalledAppsLayout
+        heading={t(
+          process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true"
+            ? "mancebo_connections_title"
+            : "installed_apps"
+        )}
+        subtitle={t("manage_your_connected_apps")}>
+        {process.env.NEXT_PUBLIC_MANCEBO_AUTH_ENABLED === "true" && (
+          <ManceboConnectionScope messaging={category === "messaging"} />
+        )}
         {categoryList.includes(category) && (
           <IntegrationsContainer handleDisconnect={handleDisconnect} variant={category} />
         )}
