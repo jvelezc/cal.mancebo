@@ -4799,6 +4799,8 @@
   "mancebo_email_first_party": "Mancebo sends booking confirmations without a messaging app. Workspace administrators can personalize the confirmation wording and preview it before saving.",
   "mancebo_email_edit": "Edit appointment emails",
   "mancebo_email_guide": "Read the confirmation email guide (opens in a new tab)",
+  "mancebo_email_choose_scope": "Choose a workspace or the platform default",
+  "mancebo_email_support_reference": "Support reference",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑",
   "mancebo_appointments_connecting": "Opening your appointments…",
   "mancebo_appointments_connection_failed": "Appointments could not connect. Open appointments again from Mancebo, or ask your administrator to check your account connection.",
