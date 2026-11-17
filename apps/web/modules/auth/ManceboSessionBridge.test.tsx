@@ -2,8 +2,13 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ signIn: vi.fn(), signOut: vi.fn(), getSession: vi.fn() }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/event-types" }));
+const mocks = vi.hoisted(() => ({
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  getSession: vi.fn(),
+  pathname: "/event-types",
+}));
+vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname }));
 vi.mock("next-auth/react", () => mocks);
 vi.mock("@calcom/lib/hooks/useLocale", () => ({ useLocale: () => ({ t: (key: string) => key }) }));
 
@@ -23,6 +28,7 @@ const session = (accessToken: string | null, id: string | null = subject) => ({
 });
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.pathname = "/event-types";
   Object.defineProperty(window, "parent", { configurable: true, value: parent });
   mocks.signIn.mockResolvedValue({ error: null });
   mocks.getSession.mockResolvedValue({ manceboSubject: subject });
@@ -38,6 +44,21 @@ const mount = () =>
     </ManceboSessionBridge>
   );
 describe("Mancebo appointment browser session boundary", () => {
+  it("closes both sessions when an embedded native logout address is opened", async () => {
+    mocks.pathname = "/auth/logout";
+    mount();
+    await waitFor(() =>
+      expect(parent.postMessage).toHaveBeenCalledWith(
+        { type: "mancebo:appointments-sign-out", subject: undefined },
+        "https://mancebo.ai"
+      )
+    );
+    expect(mocks.signOut).toHaveBeenCalledWith({ redirect: false });
+    send(session("late-token"));
+    await act(async () => {});
+    expect(mocks.signIn).not.toHaveBeenCalled();
+    expect(screen.queryByText("Private appointments")).toBeNull();
+  });
   it("clears the native session before requesting Mancebo sign-out and refuses new handoffs", async () => {
     mount();
     send(session("token"));

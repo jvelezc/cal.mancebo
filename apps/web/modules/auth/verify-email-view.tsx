@@ -9,7 +9,8 @@ import { Button } from "@calcom/ui/components/button";
 import { EmptyScreen } from "@calcom/ui/components/empty-screen";
 import { showToast } from "@calcom/ui/components/toast";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "@calcom/features/auth/lib/mancebo-sign-out";
+import { useSession } from "next-auth/react";
 import posthog from "posthog-js";
 import { useEffect } from "react";
 
